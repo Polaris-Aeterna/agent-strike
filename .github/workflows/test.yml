@@ -1,0 +1,32 @@
+# 用演示数据把每个游戏跑一遍：冒烟（中英文）、回放确定性、双语检查。
+# Runs every game on the built-in demo data: smoke (zh/en), replay determinism, translations.
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  games:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Translations / 双语检查
+        run: node tools/i18n-check.mjs web/app.js web/core.js web/modes/*.js
+      - name: Party Mix smoke, zh + en / 大乱斗冒烟
+        run: |
+          node tools/smoke.mjs party demo --lang=zh
+          node tools/smoke.mjs party demo --lang=en
+      - name: Every game, smoke + determinism / 每个游戏
+        run: |
+          for f in web/modes/*.js; do
+            id=$(basename "$f" .js)
+            [ "$id" = party ] && continue
+            node tools/smoke.mjs "$id" demo --solo --lang=en
+            node tools/determinism.mjs "$id" demo --solo
+          done
+      - name: Party Mix determinism / 大乱斗确定性
+        run: node tools/determinism.mjs party demo

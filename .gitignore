@@ -1,0 +1,9 @@
+# 解析出来的会话缓存：里面有你自己的会话标题和活动记录，绝不能提交
+# Parsed session cache: contains your own session titles and activity. Never commit it.
+.cache/
+
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+node_modules/

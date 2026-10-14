@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AGENT STRIKE</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" hidden>
+    <header id="topbar">
+      <div id="modeinfo">
+        <span id="modeBadge"></span>
+        <span id="gameName"></span>
+        <span id="clock"></span>
+        <span id="skip" hidden data-i18n="skip">⏩ 快进空闲</span>
+      </div>
+      <div id="score">
+        <div class="side claude">
+          <span class="tname">CLAUDE</span>
+          <span class="pips" id="pips-claude"></span>
+          <span class="num" id="score-claude">0</span>
+        </div>
+        <div class="mid">
+          <div id="roundNo"></div>
+          <div id="roundTimer">--:--</div>
+        </div>
+        <div class="side codex">
+          <span class="num" id="score-codex">0</span>
+          <span class="pips" id="pips-codex"></span>
+          <span class="tname">CODEX</span>
+        </div>
+      </div>
+      <nav id="tools">
+        <button id="btnBoard" data-i18n-title="boardTip"><span class="ico">📋</span><span class="lbl" data-i18n="board">计分板</span></button>
+        <button id="btnLegend" data-i18n-title="legendTip"><span class="ico">❔</span><span class="lbl" data-i18n="legend">图例</span></button>
+        <button id="btnBalance" data-i18n-title="balanceTip"><span class="ico">⚖</span><span class="lbl" data-i18n="balance">均衡</span></button>
+        <button id="btnSound" data-i18n-title="sound">🔊</button>
+        <button class="lang" data-i18n-title="langTip">中 / EN</button>
+        <button id="btnPip" data-i18n-title="pipTip" hidden><span class="ico">📺</span><span class="lbl" data-i18n="pip">悬浮窗</span></button>
+        <button id="btnMenu"><span class="ico">☰</span><span class="lbl" data-i18n="menu">菜单</span></button>
+      </nav>
+    </header>
+
+    <div id="killfeed"></div>
+    <div id="banner"></div>
+    <div id="announce"></div>
+    <div id="stage"></div>
+    <div id="hint"></div>
+
+    <footer id="playbar">
+      <button id="btnRestart" data-i18n-title="restart">⏮</button>
+      <button id="btnPlay" data-i18n-title="playTip">⏸</button>
+      <div id="timelineWrap"><canvas id="timeline"></canvas></div>
+      <span id="remain"></span>
+      <div id="speeds"></div>
+      <button id="btnStars" data-i18n-title="starsTip">⭐</button>
+    </footer>
+  </div>
+
+  <section id="board" class="overlay" hidden></section>
+
+  <section id="legend" class="overlay" hidden>
+    <div id="legendBody"></div>
+    <p class="dim" data-i18n="keys">快捷键：空格 暂停 · ← → 快退快进 · 1-6 切换速度 · Tab 计分板 · H 图例 · Esc 关闭</p>
+  </section>
+
+  <section id="endscreen" class="overlay" hidden></section>
+
+  <section id="stars" class="overlay" hidden></section>
+
+  <section id="menu">
+    <button class="lang menu-lang" data-i18n-title="langTip">中 / EN</button>
+    <div class="menu-inner">
+      <header class="brand">
+        <h1>AGENT STRIKE</h1>
+        <p data-i18n="tagline">用你电脑上真实的 Claude 和 Codex 会话，打一场游戏大杂烩</p>
+      </header>
+
+      <h3 class="step"><b>1</b> <span data-i18n="step1">选游戏</span></h3>
+      <div id="games"></div>
+
+      <h3 class="step"><b>2</b> <span data-i18n="step2">选比赛</span></h3>
+      <div class="cards">
+        <article class="card" id="cardLive">
+          <h2><span class="dot"></span><span data-i18n="live">直播</span></h2>
+          <p class="dim" data-i18n="liveDesc">现在正在跑的会话直接上场。你和 AI 的每一步，都会马上变成游戏里的动作。</p>
+          <div id="liveCounts" class="counts"></div>
+          <button class="primary" id="btnLive" data-i18n="liveGo">进入直播</button>
+        </article>
+        <article class="card" id="cardDays">
+          <h2 data-i18n="days">按天回放</h2>
+          <p class="dim" data-i18n="daysDesc">挑一天，那天所有 Claude 会话对那天所有 Codex 会话。</p>
+          <label class="check"><input type="checkbox" id="onlyBoth" checked> <span data-i18n="onlyBoth">只看两边都上场的日子</span></label>
+          <div id="days" class="list"></div>
+        </article>
+        <article class="card" id="cardDemo">
+          <h2>🎮 <span data-i18n="demo">演示</span></h2>
+          <p class="dim" data-i18n="demoDesc">电脑上没有 Claude / Codex 记录也能玩：用一份虚构的会话数据开打。</p>
+          <button class="primary" id="btnDemo" data-i18n="demoGo">开始演示</button>
+        </article>
+        <article class="card" id="cardDuel">
+          <h2 data-i18n="duel">1v1 跨时空单挑</h2>
+          <p class="dim" data-i18n="duelDesc">任挑一个 Claude 会话和一个 Codex 会话，从各自开头同时开打。</p>
+          <div class="duel">
+            <div class="col">
+              <input id="qClaude" data-i18n-ph="searchClaude" autocomplete="off">
+              <div id="listClaude" class="list small"></div>
+            </div>
+            <div class="col">
+              <input id="qCodex" data-i18n-ph="searchCodex" autocomplete="off">
+              <div id="listCodex" class="list small"></div>
+            </div>
+          </div>
+          <button class="primary" id="btnDuel" disabled data-i18n="duelGo">开打</button>
+        </article>
+      </div>
+      <p class="foot dim" data-i18n="privacy">只读取本机的 ~/.claude 和 ~/.codex 会话记录，不会修改它们，也不会上传。</p>
+    </div>
+  </section>
+
+  <div id="pipNote" hidden><span data-i18n="pipNote">📺 游戏正在桌面悬浮窗里运行</span><button class="primary" id="btnPipBack" data-i18n="pipBack">收回到这里</button></div>
+
+  <div id="loading" hidden><div class="spinner"></div><span id="loadingText"></span></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
